@@ -1,19 +1,43 @@
-## Service
-- (General) A service is a software functionality or set of functionalities that can be activated by a client. A key characteristic of a service in support of SOA is that it has low coupling to other services and strives to provide a useful function also if used independently from other services.
-- (VSC) A VSC **Service** contains one or more **Interface**s, which are defined or referenced within the service definition.  The service definition may within its namespace also define **Type**s, constants and other definitions required to make use of the service.
-- A Service name is not in itself a Namespace, but its contents must be defined within *at least one* **Namespace**.  The Namespace in question is referenced or defined from within the Service definition.
-- A Service must have its fundamental definition in **one** single .yaml formatted file, although this file might use references to other parts.  In other words, all Interfaces that make up a service must be defined, or "included" from within this file.
-- A file contains a maximum of one Service.  (For particular tools, it is of course feasible to combine several files into one while processing but that would be a tool-specific handling.)
+VSC Terminology
 
-_>	(To be further determined - how complete is our include/reference concept?)_
+The purpose of this document is to provoke discussion and eventual rough consensus around the meaning of terms used to describe VSC and its technologies.
 
-## Namespace
-- A Namespace is a way to separate definitions inside named groups.
+Many of these are general Computer Science terms that have been defined in different ways in different places.  Therefore, these definitions will surely not match every system (or personal opinion) out there.  
+
+We can still discuss in order to align these terms as far as is possible with the common-understanding.  When arguing for a different meaning, please provide references to the documented meaning in other related systems.  That should be the basis for alignment.
+
+The document also states a number of quite specific definitions/opinions that go a little bit beyond pure definition of terms. The purpose is to eventually achieve a strict and common understanding of the behavior/semantics of the VSC language and system so that it can be specified clearly.  An example of such a statement would be "There can be only one service per file".  Once again, the purpose is to provoke discussion, for a while, until final decisions are taken.
+
+
+## Interface Description
+- This means all content that is described using **only** the Interface Description Language, not supplementary files.
+- A VSC Interface Description is designed to be as independent of the target technology as possible, and as reusable as posible.
+- The design principles therefore state that the Interface Description excludes information that is target-dependent or unique for a particular environment.
+
+
+## Target Environment
+
+- For each type of output result from a generator or conversion tool, there will be environment-specific details to consider, and in this proposed terminology we refer to all of those as simply the "Target Environment".
+- Target Environment is a catch-all term to indicate the context and environment of artifacts that are generated from IDL + supplementary information.
+- The term means any and all things that are unique about that environment, or looking at it another way - any and all details that cannot universally be determined by reading only the Interface Description only would be part of the Target Environment.  The target environment details are involved in a particular interpretation of the Interface Description.
+
+Example:
+1. The chosen programming language in the case of code-generation tools is part of target environment.
+2. Also any details relating to specific software technologies that are being targeted.  For example if HTTP is an applicable protocol to use, then the choice of this protocol is part of target environment.  Furthermore, details of transport layer security (TLS) would apply if HTTP is used, whereas for other protocols it might not.  Anything related to TLS is thus part of the HTTP focused target environment - it is not part of the Interface Description.
+
+N.B. In some texts, "target-environment dependent", may sometimes be shortened to simply target-dependent or similar.
+
+DISCUSSION: In the embedded world, "target" often is understood as the embedded hardware.  Is there another better term we can use for Target Environment?
+
+
+# Namespace
+
+- A Namespace is a way to collect entities into named groups.
 - Namespaces are used to ensure that local names will not clash with identically named items in other namespace.
-- Namespaces usually also separate what objects can be *seen* or *reached* from within a part of a program.
+- Namespaces usually also separate what objects can be *seen* or *reached* from within a part of a program.  In particular in VSC, it shall serve that purpose.
 - Namespaces can contain other Namespaces, creating a hierarchy.
 - How visibility/reachability is handled *might* be specific to the target language or environment, but VSC expects the following behavior to be the normal one unless there are very good reasons for exceptions:
-  - Items within different (non-parent) namespaces are isolated from each other unless otherwise specified, and these frequently used hierarchy rules apply:  Everything within a child namespace can see and reach items in any of its parent namespaces.  For non-parent relationship, it is required to either specify an item using a fully-qualified "path" through the namespace hierarchy, or to make a statement of reference or inclusion of another namespaces into the current namespace.
+  - Items within different (non-parent) namespaces are logically isolated from each other unless otherwise specified, and these frequently used hierarchy rules apply:  Everything within a child namespace can see and reach items in any of its parent namespaces.  For non-parent relationship, it is required to either specify an item using a fully-qualified "path" through the namespace hierarchy, or to make a statement of reference or inclusion of another namespaces into the current namespace.
 
 ## Interface
 - Generally, Interface is a broad term.  We are here concerned with functional software interfaces.
@@ -22,30 +46,29 @@ _>	(To be further determined - how complete is our include/reference concept?)_
 - An Interface name is not itself a Namespace but its contents must be defined within a Namespace.
 - All Methods defined or referred to by an Interface are required to be within the same Namespace, i.e. it is not possible to build an Interface by referring to Methods that have been defined in different Namespaces.
 
+## Service
+- (General) A service is a software functionality or set of functionalities that can be activated by a client. A key characteristic of a service in support of SOA is that it fulfils a fairly specific and limited purpose, as long as it also has low coupling to other services and strives to provide a useful function also if used independently from other services.
+- (VSC) A VSC **Service** contains one or several **Interface**s, which are defined or referenced within the service definition.  The service definition may within its namespace also define **Type**s, constants and other definitions required to make use of the service.
+- A Service name is not in itself a Namespace, but its contents must be defined within *at least one* Namespace.  The used Namespace is referenced or defined from within the Service definition.
+- (VSC) A Service must have its fundamental definition in **one** single .yaml formatted file, although this file might use references to other parts.  In other words, all Interfaces that make up a service must be defined, or "included" from within this file.
+- (VSC) A single file contains a maximum of one Service.  NOTE: In certain tool environments, it is of course possible to combine several files into one file before processing the input but that would be a tool-specific handling.
+
+TODO: (To be further determined - how complete is the Include/Reference concept now?)_
+
 ## Method
-- A method is a function with a (mandatory) name, plus a set of (optional) **input parameters**, **output parameters**, and **error conditions**.
+- A method is a single software operation (a.k.a. function) with a (mandatory) name, plus a set of (optional) **input parameters**, **output parameters**, and **error conditions**.
 - Like most other objects, a Method is always defined in the context of a Namespace, but this is often implicitly determined because the Method is defined within the context of an Interface/Service
 
-## Error
+## Errors
 - A VSC Error definition is an error condition that can appear while (attempting to) execute a given Method.
 - An error is defined by referencing one or more **Type**s that define the data that shall be communicated when an error occurs.  Enumeration types are common, but it could be any defined type.
 - There can be more than one error type defined for a method.
-- It is not specified by VSC how errors are propagated to the caller of a function - that translation is target language/environment specific.
-- This transfer may be done as a return/output parameter in one programming language and translated to **Exception**-handling in another.  Communication protocols may implement their own error-condition side-channels or other methods.
+- It is not specified by VSC how errors are propagated to the caller of a function - that translation is target environment specific.  In other words it might be a return or output parameter in one programming language but using **Exception**-handling in another.  Communication protocols might embed errors in a response message, or implement some other side-channel for error propagation, or other methods.
 
-## Target environment
+TBD: Should error also be defined by its name (unique, at least within the namespace), or is it enough to reference its type.  Is this error name reusable across methods, or is it enough that the datatype(s) are reused by methods?
 
-- Target Environment is a catch-all term to indicate the context and environment of those artifacts that are generated from source IDL.  
-- For each type of output result from a generator or conversion tool, there will be environment-specific details to consider, and in the documentation we often refer to all of those as simply the "target environment".
-- The term thus signifies any and all things that are unique about that environment.
 
-For example:
-1. The chosen programming language in the case of code-generation tools.
-2. Any other details pertaining to other levels of software technology that is being targeted.  (For example if HTTP is an applicable protocol to use then details of transport layer security (TLS) would apply, whereas for other protocols it might not).
-
-N.B. In the text, "target-environment dependent", may sometimes be shortened to simply target-dependent.
-
-## Properties
+## Property
 
 - A **Property** is an observable data item.  It belongs in a **Namespace**, has a canonical name in addition to possible **aliases** (i.e. alternative names), and a data type.
 - A Property is defined as a single item but the data type could be an arbitrary data type, including composite data types.
@@ -59,7 +82,8 @@ N.B. In the text, "target-environment dependent", may sometimes be shortened to 
 ## Return values
 
 - A Return Value specifies what is returned from a Method execution.  Although "out parameters" could serve a similar purpose, the Return Value has been given special status.
-- Please be aware that while return-value is often traditionally used for indicating success/error, the abstract Errors concept is more powerful and should often be preferred.
+- Only one return value type is defined per method.
+- NOTE: Please be aware that while return-value is often traditionally used for indicating success/error, the generalized Errors concept is more powerful and should often be preferred.
 - There is only a single return value type, but it can use any data type, including composite types.
 - The term Status may be used in other technologies and the meaning of return value shall be seen as equivalent of status.
 
@@ -85,12 +109,11 @@ N.B. In the text, "target-environment dependent", may sometimes be shortened to 
 
   - \*\* Design note:  This is already in itself a very powerful mechanism and should suffice in a majority of cases, but if any additional status/streaming-data functionality is required, that may of course be done by defining a data Property in the interface, whose value is some kind of status update for the executing method.  There is no *formal* way to describe the relationship between Property and Method in this secondary approach - it would rely on documenting the relationship.
 
-  - \*\*\*Design note 2: While the interface can now be defined without deciding up front about synchronous/asynchronous operation, if an async operation _may_ be expected it is still a good idea to design the return value for this.  It is likely to include something to indicate that processing is under way.  For example the streaming returns during an operation might be: Started, Processing..., Processing..., Processing..., Done!"`  
-(Note that this too can be extended by overlays.)
+  - \*\*\*Design note 2: While the interface can now be defined without deciding up front about synchronous/asynchronous operation, if an async operation _may_ be expected it is still a good idea to design the return value for this.  It would probably include something to indicate that processing is under way.  For example the streaming returns during an operation might be: Started, Processing..., Processing..., Processing..., Done!"`  (Note that adding/changing return value can, like most features, be extended by overlays.)
 
 - After an operation has been completed and its equivalent of "DONE" has been communicated, the function is expected to seize any further communication of the return/status type.
 
-- A return value can also indicate that the operation did NOT complete successfully, but the more capable Errors concept should not be overlooked.
+- A return value can naturally indicate that the operation did NOT complete successfully, but the more capable Errors concept should not be overlooked.
 
 
 ## Event
