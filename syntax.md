@@ -1,5 +1,6 @@
 # VEHICLE SERVICE CATALOG SYNTAX
 
+(C) 2022 - MBition
 (C) 2021 - Magnus Feuer
 
 This document is licensed under Attribution 4.0 International License
@@ -110,7 +111,7 @@ This document describes the structure of the Vehicle Service Catalog
 The format supports the following features
 
 * **Namespaces**  
-  Logical grouping of methods, events, properties, and defined data types that can be nested.
+  Logical grouping of methods, events, properties, and defined data types. Namespaces can be nested so that they form a name hierarchy.
 
 * **Methods**  
   A call, executed by a single server instance, that optionally returns a value.
@@ -121,34 +122,25 @@ The format supports the following features
   Execution is best effort to UDP level with server failures not being reported.
 
 * **Defined data types**  
-  Named data types that can be enumerations, (nested) structs or typedefs.
+  Named data types that can be enumerations, structs or typedefs.  Definitions can be nested.
   
 * **Properties**  
   A shared state object that can be read and set, and which is
-  available to all subscribing entities. Compared with a signal (see
-  below), a property can be viewed as a level trigger while a signal
-  is an edge trigger.
+  available to all subscribing entities. A Property can be of any
+  defined data type.  A VSS signal is semantically a Property,
+  although its datatype is limited to what VSS defines as possible
+  data types.
 
 * **Deployment files**  
   Adds deployment-specific data to a VSC file.
   
-## Features currently not included
-
-The following features are yet to be determined:
-
-* **Signals**  
-  These are semantically equivalent to single-argument events. We need to decide
-  how we want to integrate VSS signals.
-  
-* **More?**
-
 
 --------------------
 
 # NAMESPACE VERSIONING
 
-VSC namespaces can optionally have a major and minor version,
-specified by `major_version` and `minor_version` keys.
+VSC namespaces optionally specifies a major and minor numerical version, plus a
+free-form string for additional information.
 
 Namespace version management lets a client implementation have
 expectations that a server implementation will support a specific
@@ -173,12 +165,11 @@ required.
 
 -------------------
 
-# NATIVE DATA TYPES
+# PRIMITIVE DATA TYPES
 
-The following native data types are available as properties, in/out
-arguments, enumeration types, and struct members.
-
-(Imported from VSS)
+Primitive datatypes are defined identical to those of VSS (Vehicle Signal
+Specification) and these types also correspond to many similar IDLs as systems
+well.
 
 | Name       | Type                                   | Min         | Max        |
 |:-----------|:---------------------------------------|:------------|:-----------|
@@ -194,17 +185,17 @@ arguments, enumeration types, and struct members.
 | float      | floating point number                  | -3.4e -38   | 3.4e 38    |
 | double     | double precision floating point number | -1.7e -300  | 1.7e 300   |
 | string     | character string                       | n/a         | n/a        |
+FIXME:
 | byteBuffer | buffer of bytes (aka BLOB)             | n/a         | n/a        |
 
 -------------
 
 # ARRAYS
 
-Besides the datatypes described above, VSS supports as well the concept of
-`arrays`, as a *collection of elements based on the data entry
-definition*, wherein it's specified. By default the size of the array is undefined.
-By the optional keyword `arraysize` the size of the array can be specified.
-The following syntax shall be used to declare an array:
+Arrays can be defined with any datatype for its contents (primitive and
+composite).  By default the size of the array is undefined.  By the optional
+keyword `arraysize` the size of the array can be specified.  The following
+syntax shall be used to declare an array:
 
 ```YAML
 # Array of datatype uint32, by default size of the array is undefined
@@ -220,7 +211,7 @@ Only single-dimensional arrays are supported.
 # VALUE RANGE SPECIFICATION
 
 Methods, events, and properties can optionally specify a range of
-legal value that their `in`, `out`, `error` and property can take.
+legal values that their `in`, `out`, `error` and property may contain.
 
 A range is specified as a list of values that are legal for a given
 parameter or property to have.
@@ -393,10 +384,7 @@ structs:
       - name: outer_struct_value_1
         datatype: string
 
-      - name: outer_struct_value_2
-        datatype: float
-
-      - name: an_inner_struct
+      - name: an_inner_struct_value
         datatype: inner_struct_t
 
 methods:
@@ -467,7 +455,7 @@ methods:
 
 A defined data type, specified in a `typedefs`, `structs`, or
 `enumerations` list object, can be referenced by other entities such
-as other data types(such as a struct member being another struct or
+as other data types (such as a struct member being another struct or
 enumerator), methods and event parameters, and properties.
 
 These references can be of three different kinds:
@@ -549,7 +537,7 @@ This syntax allows any defined data type of any nested namespace to be reference
 
 ##  External namespace data type
 In this case the data type is defined in a another namespace that
-resides under the namespace of the entity using the type, as shown
+resides in parallel with the namespace of the entity using the type, as shown
 below:
 
 
@@ -575,7 +563,7 @@ nested namespace access since `external_namespace` lives parallel to
 `my_namespace` and is not nested inside it.
 
 This is resolved by specifying an absolute path to the defined
-datatype, which is identical to a a nested namespace path
+datatype. An absolute path looks the same as a nested namespace path
 apart from being prefixed with a period:
 
     datatype: .external_namespace.nested_namespace.my_typedef
@@ -584,15 +572,17 @@ This syntax allows any defined data type anywhere in the tree to be used.
 
 -----------------------
 
-# DEPLOYMENT FILES
+# DEPLOYMENT LAYERS
 
-Deployment files contains VSC file extensions to be applied when the
-VSC file is processed.  An example of deployment file data is a DBUS
-interface specification to be used for a namespace, or a SOME/IP
-method ID to be used for a method call.
+TODO: LOOK AT EXTENDING AND POSSIBLY RENAMING THIS CONCEPT
+
+Deployment files or "layers" contains VSC file extensions to be applied when
+the VSC file is processed.  An example of deployment file data is a DBUS
+interface specification to be used for a namespace, or a SOME/IP method ID to
+be used for a method call.
 
 By separating the extension data into their own deployment files the
-core VSC specification can be kept independent of deployment details
+interface descriptions can be kept independent of deployment details
 such as network protocols and topology.
 
 An example of a VSC file sample and a deployment file extension to
@@ -620,7 +610,9 @@ namespaces:
     dbus_interface: com.genivi.cabin.seat.v1
 ```
 
-The combined YAML structure to be processed will look like this:
+Deployment files are overlays on top of the interface description so tools
+may be processing their combined contents and have an internal interpretation
+that essentially looks like this:
 
 ```YAML
 name: comfort
@@ -632,6 +624,10 @@ namespaces:
     structs: ...
     methods: ...
 ```
+
+However! We do not write files like this, because interface definitions shall
+be written to be reusable and thus must be independent of the deployment
+technology.
 
 The semantic difference between a regular VSC file included by an
 `includes` list object and a deployment file is that the deployment
@@ -744,6 +740,7 @@ A complete VSC file example is given below:
 name: comfort
 major_version: 2
 minor_version: 1
+version_label: git-4b7fa438dc1263b1ab651358b580587024ff6c80
 description: A collection of interfaces pertaining to cabin comfort.
 
 # Include generic error enumeration to reside directly
